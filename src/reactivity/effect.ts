@@ -4,8 +4,12 @@
  */
 class ReactiveEffect {
   private _fn: any;
-  constructor(fn, public scheduler?) {
+  deps = new Set();
+  active: boolean = true;
+  public scheduler: Function | undefined;
+  constructor(fn, scheduler?) {
     this._fn = fn;
+    this.scheduler = scheduler;
   }
   run() {
     // 实例化的时候，将activeEffect赋值为当前实例
@@ -13,6 +17,19 @@ class ReactiveEffect {
     // 将fn的返回值return出去
     return this._fn();
   }
+  stop() {
+    // 某effect的stop执行过后，不再重复执行，优化性能
+    if (this.active) {
+      // 在所有的dep中删除该effect
+      cleanupEffect(this);
+      this.active = false;
+    }
+  }
+}
+function cleanupEffect(effect) {
+  effect.deps.forEach((dep: any) => {
+    dep.delete(effect);
+  });
 }
 
 // 依赖收集；每个key对应一个独一无二的dep，在dep中收集activeEffect
@@ -43,6 +60,8 @@ export function track(target, key) {
   }
 
   dep.add(activeEffect);
+  // 反向收集
+  activeEffect?.deps.add(dep);
 }
 
 // 触发更新：获取到dep收集的所有effect，执行effect里面的回调
@@ -63,6 +82,13 @@ export function effect(fn, options: any = {}) {
   const _effect = new ReactiveEffect(fn, options.scheduler);
   _effect.run();
   // 返回runner，并将指针绑定为effect实例
-  const runner = _effect.run.bind(_effect);
+  const runner: any = _effect.run.bind(_effect);
+  // 在runner上新增一个effect属性，值为effect实例
+  runner.effect = _effect;
   return runner;
+}
+
+// 实现思路：执行stop，将对应的effect从deps中删除
+export function stop(runner) {
+  runner.effect.stop();
 }

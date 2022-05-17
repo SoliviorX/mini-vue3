@@ -1,5 +1,5 @@
 import { reactive } from '../reactive';
-import { effect } from '../effect';
+import { effect, stop } from '../effect';
 
 /**
  * 测试reactive：
@@ -78,5 +78,25 @@ describe('effect', () => {
     // 验证手动执行runner，fn会被执行
     run(); // scheduler执行后，run被赋值为runner，即_effect.run
     expect(dummy).toBe(2);
+  });
+
+  it('stop', () => {
+    let dummy;
+    const obj = reactive({ prop: 1 });
+    const runner = effect(() => {
+      dummy = obj.prop;
+    });
+    obj.prop = 2;
+    expect(dummy).toBe(2);
+    // 调用 stop 后，当传入的函数依赖的响应式对象的 property 的值更新时不会再执行该函数
+    stop(runner);
+    obj.prop = 3;
+    /**
+     * obj.prop++;  下面的expect报错，dummy === 3，fn会被执行，stop失效，与obj.prop = 3有何不同？？？？
+     */
+    expect(dummy).toBe(2);
+    // 只有手动调用`runner`时才会触发fn执行
+    runner();
+    expect(dummy).toBe(3);
   });
 });
