@@ -1,3 +1,5 @@
+import { extend } from '../shared/index';
+
 /**
  * 创建effect时，首次会自动执行fn
  * 所以可以考虑使用class的方式实现effect
@@ -6,8 +8,9 @@ class ReactiveEffect {
   private _fn: any;
   deps = new Set();
   active: boolean = true;
+  onStop?: () => void;
   public scheduler: Function | undefined;
-  constructor(fn, scheduler?) {
+  constructor(fn, scheduler?: Function) {
     this._fn = fn;
     this.scheduler = scheduler;
   }
@@ -22,6 +25,9 @@ class ReactiveEffect {
     if (this.active) {
       // 在所有的dep中删除该effect
       cleanupEffect(this);
+      if (this.onStop) {
+        this.onStop();
+      }
       this.active = false;
     }
   }
@@ -59,9 +65,11 @@ export function track(target, key) {
     depsMap.set(key, dep);
   }
 
+  if (!activeEffect) return;
+
   dep.add(activeEffect);
   // 反向收集
-  activeEffect?.deps.add(dep);
+  activeEffect.deps.add(dep);
 }
 
 // 触发更新：获取到dep收集的所有effect，执行effect里面的回调
@@ -80,6 +88,11 @@ export function trigger(target, key) {
 let activeEffect;
 export function effect(fn, options: any = {}) {
   const _effect = new ReactiveEffect(fn, options.scheduler);
+  // 方式一：_effect.onStop = options.onStop
+  // 方式二：Object.assign(_effect, options);
+  // 方式三：export extend = Object.assign，然后使用extend来扩展_effect，更具可读性。
+  extend(_effect, options);
+
   _effect.run();
   // 返回runner，并将指针绑定为effect实例
   const runner: any = _effect.run.bind(_effect);

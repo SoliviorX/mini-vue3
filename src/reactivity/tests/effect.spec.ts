@@ -99,4 +99,26 @@ describe('effect', () => {
     runner();
     expect(dummy).toBe(3);
   });
+
+  /**
+   * 1. 通过第二个参数给effect传递一个函数——onStop
+   * 2. 用户调用stop(runner)后，onStop会被执行一次
+   */
+  it('onStop', () => {
+    const obj = reactive({
+      foo: 1,
+    });
+    const onStop = jest.fn();
+    let dummy;
+    const runner = effect(
+      () => {
+        dummy = obj.foo;
+      },
+      {
+        onStop,
+      },
+    );
+    stop(runner);
+    expect(onStop).toBeCalledTimes(1);
+  });
 });
