@@ -1,5 +1,6 @@
 import { track, trigger } from './effect';
-import { ReactiveFlags } from './reactive';
+import { reactive, ReactiveFlags, readonly } from './reactive';
+import { isObject } from '../shared';
 
 function createGetter(isReadonly = false) {
   return function (target, key) {
@@ -10,6 +11,13 @@ function createGetter(isReadonly = false) {
     }
 
     const res = Reflect.get(target, key);
+
+    // 在获取元素的时候，判断是否是object类型，是的话进行递归
+    // 相较于vue2一来是就对data一次性递归到底，这种方式性能更好
+    if (isObject(res)) {
+      return isReadonly ? readonly(res) : reactive(res);
+    }
+
     // isReadonly属性不进行依赖收集
     if (!isReadonly) {
       track(target, key);
