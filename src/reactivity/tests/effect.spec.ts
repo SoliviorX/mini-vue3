@@ -44,4 +44,39 @@ describe('effect', () => {
     // 验证执行runner有没有获取到fn的返回值
     expect(r).toBe('foo');
   });
+
+  /**
+   * 1. 通过effect的第二个参数，给定一个scheduler的fn
+   * 2. effect第一次执行时还会执行fn
+   * 3. 当响应式对象的set更新时，不再执行fn，而是执行scheduler
+   * 4. 如果手动执行runner，会再次执行fn
+   */
+  it('scheduler', () => {
+    let dummy;
+    let run: any;
+    const scheduler = jest.fn(() => {
+      run = runner;
+    });
+    const obj = reactive({ foo: 1 });
+    const runner = effect(
+      () => {
+        dummy = obj.foo;
+      },
+      { scheduler },
+    );
+    // 验证scheduler第一时间没有被调用
+    expect(scheduler).not.toHaveBeenCalled();
+
+    // 验证effect的第一个回调函数第一时间被调用了
+    expect(dummy).toBe(1);
+    obj.foo++;
+
+    // 验证响应式数据修改后，scheduler会被调用一次，而effect的第一个参数不会被调用
+    expect(scheduler).toHaveBeenCalledTimes(1);
+    expect(dummy).toBe(1);
+
+    // 验证手动执行runner，fn会被执行
+    run(); // scheduler执行后，run被赋值为runner，即_effect.run
+    expect(dummy).toBe(2);
+  });
 });
