@@ -1,12 +1,15 @@
 import { extend } from '../shared/index';
 
+let activeEffect;
+let shouldTrack;
+
 /**
  * 创建effect时，首次会自动执行fn
  * 所以可以考虑使用class的方式实现effect
  */
 class ReactiveEffect {
   private _fn: any;
-  deps = new Set();
+  deps = [];
   active: boolean = true;
   onStop?: () => void;
   public scheduler: Function | undefined;
@@ -15,10 +18,22 @@ class ReactiveEffect {
     this.scheduler = scheduler;
   }
   run() {
-    // 实例化的时候，将activeEffect赋值为当前实例
+    if (!this.active) {
+      return this._fn();
+    }
+    /**
+     * 1. 先把shouldTrack设为true，当执行下面的_fn时，就会进行依赖收集，fn执行完再把shouldTrack设为false
+     * 2. 只有在初始化effect实例、触发更新和手动执行runner时才会执行 run()
+     * 3. 也就是说在重新获取数据，触发数据的get时，不会执行run，shouldTrack为false，不会重新进行依赖收集
+     * 4. 所以当执行obj.foo++ 重新触发get时，由于shouldTrack为false，不会重新进行依赖收集
+     */
+    shouldTrack = true;
     activeEffect = this;
-    // 将fn的返回值return出去
-    return this._fn();
+    const result = this._fn();
+    // reset
+    shouldTrack = false;
+
+    return result;
   }
   stop() {
     // 某effect的stop执行过后，不再重复执行，优化性能
@@ -33,9 +48,12 @@ class ReactiveEffect {
   }
 }
 function cleanupEffect(effect) {
+  // deps中每个dep都把该effect删除
   effect.deps.forEach((dep: any) => {
     dep.delete(effect);
   });
+  // 再把该effect.deps清空
+  effect.deps.length = 0;
 }
 
 // 依赖收集；每个key对应一个独一无二的dep，在dep中收集activeEffect
@@ -53,6 +71,8 @@ const targetMap = new Map();
     }
 */
 export function track(target, key) {
+  if (!isTracking()) return;
+
   // target -> key -> dep
   let depsMap = targetMap.get(target);
   if (!depsMap) {
@@ -65,11 +85,15 @@ export function track(target, key) {
     depsMap.set(key, dep);
   }
 
-  if (!activeEffect) return;
+  // 不重复收集
+  if (dep.has(activeEffect)) return;
 
   dep.add(activeEffect);
   // 反向收集
-  activeEffect.deps.add(dep);
+  activeEffect.deps.push(dep);
+}
+function isTracking() {
+  return shouldTrack && activeEffect !== undefined;
 }
 
 // 触发更新：获取到dep收集的所有effect，执行effect里面的回调
@@ -85,7 +109,6 @@ export function trigger(target, key) {
   }
 }
 
-let activeEffect;
 export function effect(fn, options: any = {}) {
   const _effect = new ReactiveEffect(fn, options.scheduler);
   // 方式一：_effect.onStop = options.onStop

@@ -91,13 +91,17 @@ describe('effect', () => {
     // 调用 stop 后，当传入的函数依赖的响应式对象的 property 的值更新时不会再执行该函数
     stop(runner);
     obj.prop = 3;
+    expect(dummy).toBe(2);
     /**
-     * obj.prop++;  下面的expect报错，dummy === 3，fn会被执行，stop失效，与obj.prop = 3有何不同？？？？
+     * obj.prop++; 下面的expect报错，实际结果是4，为何stop失效，它与直接对obj.prop进行赋值有何不同？？？？
+     * 【答】obj.prop = 3只会触发set；obj.prop++ 相当于 obj.prop = obj.prop + 1，会触发get和set，在get中会重新收集依赖，然后set时会触发更新，也就是说上面stop中清除依赖白忙活了。
+     * 【解决方案】添加一个标识符来判断是否需要重新进行依赖收集
      */
+    obj.prop++;
     expect(dummy).toBe(2);
     // 只有手动调用`runner`时才会触发fn执行
     runner();
-    expect(dummy).toBe(3);
+    expect(dummy).toBe(4);
   });
 
   /**
