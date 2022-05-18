@@ -7,7 +7,7 @@ let shouldTrack;
  * 创建effect时，首次会自动执行fn
  * 所以可以考虑使用class的方式实现effect
  */
-class ReactiveEffect {
+export class ReactiveEffect {
   private _fn: any;
   deps = [];
   active: boolean = true;
