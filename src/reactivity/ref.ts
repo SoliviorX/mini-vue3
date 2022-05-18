@@ -7,6 +7,7 @@ class RefImpl {
   private _value: any;
   private _rawValue: any;
   public dep;
+  public __v_isRef = true;
   constructor(value) {
     /**
      * 1. 取值的时候判断value是否是对象，是对象的话就用reactive进行包裹，否则直接取值
@@ -47,4 +48,12 @@ function convert(value) {
 
 export function ref(value) {
   return new RefImpl(value);
+}
+
+export function isRef(ref) {
+  return !!ref.__v_isRef;
+}
+
+export function unRef(val) {
+  return isRef(val) ? val.value : val;
 }
