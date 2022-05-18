@@ -1,6 +1,6 @@
 import { effect } from '../effect';
 import { reactive } from '../reactive';
-import { ref, isRef, unRef } from '../ref';
+import { ref, isRef, unRef, proxyRefs } from '../ref';
 
 describe('ref', () => {
   // 测试 经过ref处理过的数据，需要通过value属性拿到它的值
@@ -58,5 +58,27 @@ describe('ref', () => {
     const a = ref(1);
     expect(unRef(a)).toBe(1);
     expect(unRef(1)).toBe(1);
+  });
+
+  it('proxyRefs', () => {
+    const user = {
+      age: ref(10),
+      name: 'Jack',
+    };
+    const proxyUser = proxyRefs(user);
+    expect(user.age.value).toBe(10);
+    // 1. 测试不通过value属性，直接访问
+    expect(proxyUser.age).toBe(10);
+    expect(proxyUser.name).toBe('Jack');
+
+    // 当旧值为ref，新值不是ref时
+    proxyUser.age = 20;
+    expect(proxyUser.age).toBe(20);
+    expect(user.age.value).toBe(20);
+
+    // 其他类型的set
+    proxyUser.age = ref(10);
+    expect(proxyUser.age).toBe(10);
+    expect(user.age.value).toBe(10);
   });
 });
