@@ -85,21 +85,26 @@ export function track(target, key) {
     depsMap.set(key, dep);
   }
 
+  trackEffects(dep);
+}
+export function isTracking() {
+  return shouldTrack && activeEffect !== undefined;
+}
+export function trackEffects(dep) {
   // 不重复收集
   if (dep.has(activeEffect)) return;
-
   dep.add(activeEffect);
   // 反向收集
   activeEffect.deps.push(dep);
-}
-function isTracking() {
-  return shouldTrack && activeEffect !== undefined;
 }
 
 // 触发更新：获取到dep收集的所有effect，执行effect里面的回调
 export function trigger(target, key) {
   let depsMap = targetMap.get(target);
   let dep = depsMap.get(key);
+  triggerEffects(dep);
+}
+export function triggerEffects(dep) {
   for (const effect of dep) {
     if (effect.scheduler) {
       effect.scheduler();
