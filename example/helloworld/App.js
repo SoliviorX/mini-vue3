@@ -1,3 +1,5 @@
+import { h } from '../../lib/guid-mini-vue.esm.js';
+
 export const App = {
   // template也会被编译成render函数
   render() {

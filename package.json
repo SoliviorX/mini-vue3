@@ -1,11 +1,13 @@
 {
   "name": "mini-vue-next",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "lib/guid-mini-vue.cjs.js",
+  "module": "lib/guid-mini-vue.esm.js",
   "license": "MIT",
   "scripts": {
     "test": "jest",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "build": "rollup -c rollup.config.js"
   },
   "dependencies": {
     "typescript": "^4.6.4"
@@ -16,11 +18,14 @@
     "@babel/preset-typescript": "^7.16.7",
     "@commitlint/cli": "^16.3.0",
     "@commitlint/config-conventional": "^16.2.4",
+    "@rollup/plugin-typescript": "^8.3.2",
     "@types/jest": "^27.5.1",
     "babel-jest": "^28.1.0",
     "husky": "^8.0.1",
     "jest": "^28.1.0",
     "prettier": "^2.6.2",
-    "ts-jest": "^28.0.2"
+    "rollup": "^2.74.0",
+    "ts-jest": "^28.0.2",
+    "tslib": "^2.4.0"
   }
 }
