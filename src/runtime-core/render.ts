@@ -1,3 +1,4 @@
+import { visitNode } from '../../node_modules/typescript/lib/typescript';
 import { isObject } from '../shared/index';
 import { createComponentInstance, setupComponent } from './component';
 
@@ -21,7 +22,8 @@ function processElement(vnode: any, container: any) {
 }
 
 function mountElement(vnode: any, container: any) {
-  const el = document.createElement(vnode.type);
+  // 将元素el存到vnode.el：访问this.$el时，即可从代理对象上访问instance.vnode.el
+  const el = (vnode.el = document.createElement(vnode.type));
 
   const { children, props } = vnode;
   if (Array.isArray(children)) {
@@ -50,21 +52,23 @@ function processComponent(vnode: any, container: any) {
   // TODO updateComponent
 }
 
-function mountComponent(vnode, container) {
+function mountComponent(initialVNode, container) {
   // 1. 创建组件实例
-  const instance = createComponentInstance(vnode);
+  const instance = createComponentInstance(initialVNode);
   // 2. 初始化组件属性：initProps、initSlots，调用setup、处理setup的返回值（当前仅处理返回类型为object）赋值到instance.setupState，将组件的render函数赋值到instance.render上
   setupComponent(instance);
 
   // 3. 执行render函数、递归patch，渲染组件
-  setupRenderEffect(instance, container);
+  setupRenderEffect(instance, initialVNode, container);
 }
 
-function setupRenderEffect(instance: any, container) {
+function setupRenderEffect(instance: any, initialVNode, container) {
   // 执行render函数，生成vnode树
-  console.log(instance);
-  const subTree = instance.render();
+  const { proxy } = instance;
+  const subTree = instance.render.call(proxy);
 
   // 递归调用子VNode
   patch(subTree, container);
+  // 设置父组件的 vnode.el，使得proxy代理对象在处理this.$el时有值，不会报错undefined
+  initialVNode.el = subTree.el;
 }

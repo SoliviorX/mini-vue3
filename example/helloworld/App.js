@@ -10,8 +10,8 @@ export const App = {
         id: 'app',
         name: ['111', '222'],
       },
-      // 'hi,' + this.msg,  // string文本
-      [h('p', { class: 'red' }, 'hi'), h('p', { class: 'blue' }, 'mini-vue-next')],
+      'hi,' + this.msg, // string文本
+      // [h('p', { class: 'red' }, 'hi'), h('p', { class: 'blue' }, 'mini-vue-next')],
     );
   },
   setup() {

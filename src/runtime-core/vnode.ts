@@ -5,6 +5,7 @@ interface VNode {
   props?: object;
   /* 子代VNode、文本 */
   children?: string | Array<VNode> | object;
+  el?;
 }
 
 export function createVNode(type, props?, children?) {
@@ -12,6 +13,7 @@ export function createVNode(type, props?, children?) {
     type,
     props,
     children,
+    el: null,
   };
 
   return vnode;
