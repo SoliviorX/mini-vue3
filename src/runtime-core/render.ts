@@ -1,3 +1,4 @@
+import { isObject } from '../shared/index';
 import { createComponentInstance, setupComponent } from './component';
 
 export function render(vnode, container) {
@@ -5,12 +6,41 @@ export function render(vnode, container) {
 }
 
 function patch(vnode, container) {
-  // TODO 根据虚拟节点类型进行不同的处理逻辑
+  if (typeof vnode.type === 'string') {
+    processElement(vnode, container);
+  } else if (isObject(vnode.type)) {
+    processComponent(vnode, container);
+  }
+}
 
-  // 处理组件
-  processComponent(vnode, container);
+function processElement(vnode: any, container: any) {
+  // 元素初始化
+  mountElement(vnode, container);
 
-  // TODO 处理元素：processElement
+  // TODO 元素更新
+}
+
+function mountElement(vnode: any, container: any) {
+  const el = document.createElement(vnode.type);
+
+  const { children, props } = vnode;
+  if (Array.isArray(children)) {
+    mountChildren(vnode, el);
+  } else if (typeof children === 'string') {
+    el.textContent = children;
+  }
+
+  for (const key in props) {
+    const val = props[key];
+    el.setAttribute(key, val);
+  }
+  container.append(el);
+}
+
+function mountChildren(vnode, container) {
+  vnode.children.forEach(v => {
+    patch(v, container);
+  });
 }
 
 function processComponent(vnode: any, container: any) {
@@ -32,6 +62,7 @@ function mountComponent(vnode, container) {
 
 function setupRenderEffect(instance: any, container) {
   // 执行render函数，生成vnode树
+  console.log(instance);
   const subTree = instance.render();
 
   // 递归调用子VNode
