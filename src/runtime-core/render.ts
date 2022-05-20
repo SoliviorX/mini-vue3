@@ -1,5 +1,4 @@
-import { visitNode } from '../../node_modules/typescript/lib/typescript';
-import { isObject } from '../shared/index';
+import { ShapeFlags } from '../shared/index';
 import { createComponentInstance, setupComponent } from './component';
 
 export function render(vnode, container) {
@@ -7,9 +6,12 @@ export function render(vnode, container) {
 }
 
 function patch(vnode, container) {
-  if (typeof vnode.type === 'string') {
+  const { shapeFlag } = vnode;
+
+  // 通过 VNode 的 shapeFlag property 与枚举变量 ShapeFlags 进行与运算是否大于0来判断 VNode 类型
+  if (shapeFlag & ShapeFlags.ELEMENT) {
     processElement(vnode, container);
-  } else if (isObject(vnode.type)) {
+  } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
     processComponent(vnode, container);
   }
 }
@@ -25,10 +27,13 @@ function mountElement(vnode: any, container: any) {
   // 将元素el存到vnode.el：访问this.$el时，即可从代理对象上访问instance.vnode.el
   const el = (vnode.el = document.createElement(vnode.type));
 
-  const { children, props } = vnode;
-  if (Array.isArray(children)) {
+  const { children, props, shapeFlag } = vnode;
+  // 通过 VNode 的 shapeFlag property 与枚举变量 ShapeFlags 进行与运算是否大于0来判断 children 类型
+  if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+    // 如果包含子节点
     mountChildren(vnode, el);
-  } else if (typeof children === 'string') {
+  } else if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+    // 如果是文本节点
     el.textContent = children;
   }
 

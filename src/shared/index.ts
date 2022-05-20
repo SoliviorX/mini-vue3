@@ -5,3 +5,5 @@ export const isObject = val => {
 };
 
 export const hasChanged = (newVal, oldVal) => !Object.is(newVal, oldVal);
+
+export * from './shapeFlags';
