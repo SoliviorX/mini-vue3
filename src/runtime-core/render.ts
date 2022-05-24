@@ -26,8 +26,9 @@ function processElement(vnode: any, container: any) {
 function mountElement(vnode: any, container: any) {
   // 将元素el存到vnode.el：访问this.$el时，即可从代理对象上访问instance.vnode.el
   const el = (vnode.el = document.createElement(vnode.type));
-
   const { children, props, shapeFlag } = vnode;
+
+  // 1. 处理children
   // 通过 VNode 的 shapeFlag property 与枚举变量 ShapeFlags 进行与运算是否大于0来判断 children 类型
   if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
     // 如果包含子节点
@@ -37,9 +38,18 @@ function mountElement(vnode: any, container: any) {
     el.textContent = children;
   }
 
+  // 2. 处理props
   for (const key in props) {
     const val = props[key];
-    el.setAttribute(key, val);
+    const isOn = (key: string) => /^on[A-Z]/.test(key);
+    if (isOn(key)) {
+      // 处理事件
+      const event = key.slice(2).toLowerCase();
+      el.addEventListener(event, val);
+    } else {
+      // 处理普通属性
+      el.setAttribute(key, val);
+    }
   }
   container.append(el);
 }

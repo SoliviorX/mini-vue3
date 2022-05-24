@@ -1,14 +1,24 @@
 import { h } from '../../lib/guid-mini-vue.esm.js';
+window.self = null;
 
 export const App = {
   // template也会被编译成render函数
   render() {
+    window.self = this;
     // 测试在render函数中通过this获取到setup的返回对象的property
     return h(
       'div',
       {
         id: 'app',
-        name: ['111', '222'],
+        class: ['red', 'blue'],
+        // 注册 onClick 事件
+        onClick() {
+          console.log('you clicked root-div');
+        },
+        // 注册 onMousedown 事件
+        onMousedown() {
+          console.log('your mouse down on root-div');
+        },
       },
       'hi,' + this.msg, // string文本
       // [h('p', { class: 'red' }, 'hi'), h('p', { class: 'blue' }, 'mini-vue-next')],
