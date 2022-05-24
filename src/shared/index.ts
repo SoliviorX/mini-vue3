@@ -6,4 +6,6 @@ export const isObject = val => {
 
 export const hasChanged = (newVal, oldVal) => !Object.is(newVal, oldVal);
 
+export const hasOwn = (val, key) => Object.prototype.hasOwnProperty.call(val, key);
+
 export * from './shapeFlags';

@@ -1,7 +1,9 @@
 import { h } from '../../lib/guid-mini-vue.esm.js';
+import { Foo } from './Foo.js';
 window.self = null;
 
 export const App = {
+  name: 'App',
   // template也会被编译成render函数
   render() {
     window.self = this;
@@ -20,7 +22,8 @@ export const App = {
           console.log('your mouse down on root-div');
         },
       },
-      'hi,' + this.msg, // string文本
+      [h('div', {}, 'hi,' + this.msg), h(Foo, { count: 1 })],
+      // 'hi,' + this.msg, // string文本
       // [h('p', { class: 'red' }, 'hi'), h('p', { class: 'blue' }, 'mini-vue-next')],
     );
   },

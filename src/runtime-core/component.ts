@@ -1,17 +1,20 @@
 import { PublicInstanceProxyHandlers } from './componentPublicInstance';
+import { initProps } from './componentProps';
+import { shallowReadonly } from '../reactivity/reactive';
 
 export function createComponentInstance(vnode) {
   const component = {
     vnode,
     type: vnode.type,
     setupState: {},
+    props: {},
   };
   return component;
 }
 
 export function setupComponent(instance) {
+  initProps(instance, instance.vnode.props);
   // TODO:
-  // initProps()
   // initSlots()
 
   // setupStatefulComponent —— 初始化一个有状态的component；与其相对的是没有状态的函数式组件
@@ -26,7 +29,8 @@ function setupStatefulComponent(instance: any) {
   const { setup } = Component;
   if (setup) {
     // setup可以返回一个function或者object，返回function则表示返回的是render函数，返回对象则会把该对象中的数据注入到当前组件的上下文中
-    const setupResult = setup();
+    // 将props作为参数传给setup
+    const setupResult = setup(shallowReadonly(instance.props));
 
     handleSetupResult(instance, setupResult);
   }
