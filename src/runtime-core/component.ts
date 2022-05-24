@@ -2,6 +2,7 @@ import { PublicInstanceProxyHandlers } from './componentPublicInstance';
 import { initProps } from './componentProps';
 import { shallowReadonly } from '../reactivity/reactive';
 import { emit } from './componentEmit';
+import { initSlots } from './componentSlots';
 
 export function createComponentInstance(vnode) {
   const component = {
@@ -9,6 +10,7 @@ export function createComponentInstance(vnode) {
     type: vnode.type,
     setupState: {},
     props: {},
+    slots: {},
     emit: () => {},
   };
   // 使用bind将component实例作为第一个参数传给emit，用于在emit中获取props对应的事件，所以用户只需要传入事件名及其他参数即可
@@ -18,8 +20,8 @@ export function createComponentInstance(vnode) {
 
 export function setupComponent(instance) {
   initProps(instance, instance.vnode.props);
-  // TODO:
-  // initSlots()
+
+  initSlots(instance, instance.vnode.children);
 
   // setupStatefulComponent —— 初始化一个有状态的component；与其相对的是没有状态的函数式组件
   setupStatefulComponent(instance);

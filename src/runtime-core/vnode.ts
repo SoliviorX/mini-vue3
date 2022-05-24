@@ -28,6 +28,12 @@ export function createVNode(type, props?, children?) {
     vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN;
   }
 
+  // 如果vnode类型是component，同时children类型为对象，则children为插槽，设置shapeFlag 对应的位
+  if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+    if (typeof children === 'object') {
+      vnode.shapeFlag |= ShapeFlags.SLOTS_CHILDREN;
+    }
+  }
   return vnode;
 }
 
