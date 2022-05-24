@@ -7,9 +7,21 @@ export const App = {
     const app = h('div', {}, 'App');
     // 目标：让插槽内容能够在Foo组件中展示出来
     // 1. 传入一个vnode作为插槽
-    // const foo = h(Foo, {}, h('p', {}, '123'));
+    // const foo = h(
+    //   Foo,
+    //   {},
+    //   {
+    //     default: [h('p', {}, '123')],
+    //   },
+    // );
     // 2. 传入一个vnode数组，数组中每一项都是一个插槽
-    // const foo = h(Foo, {}, [h('p', {}, 'a slot'), h('p', {}, 'another slot')]);
+    // const foo = h(
+    //   Foo,
+    //   {},
+    //   {
+    //     default: [h('p', {}, 'a slot'), h('p', {}, 'another slot')],
+    //   },
+    // );
     // 3. 具名插槽，object的形式传入slots
     // const foo = h(
     //   Foo,

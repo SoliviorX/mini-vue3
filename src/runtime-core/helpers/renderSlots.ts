@@ -5,11 +5,14 @@ import { createVNode } from '../vnode';
  * 2. 把this.$slots展开放入children中也行啊，还可以少一层div包裹，为何不这样处理？？？？
  */
 export function renderSlots(slots, name, props) {
-  // 通过 name 获取创建相应插槽的方法
   const slot = slots[name];
   if (slot) {
+    // 如果是作用域插槽
     if (typeof slot === 'function') {
-      return createVNode('div', {}, slot(props));
+      return slot(props);
+    } else {
+      // 如果是默认插槽/具名插槽
+      return createVNode('div', {}, slot);
     }
   }
 }
