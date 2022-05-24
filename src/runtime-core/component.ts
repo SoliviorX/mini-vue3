@@ -1,6 +1,7 @@
 import { PublicInstanceProxyHandlers } from './componentPublicInstance';
 import { initProps } from './componentProps';
 import { shallowReadonly } from '../reactivity/reactive';
+import { emit } from './componentEmit';
 
 export function createComponentInstance(vnode) {
   const component = {
@@ -8,7 +9,10 @@ export function createComponentInstance(vnode) {
     type: vnode.type,
     setupState: {},
     props: {},
+    emit: () => {},
   };
+  // 使用bind将component实例作为第一个参数传给emit，用于在emit中获取props对应的事件，所以用户只需要传入事件名及其他参数即可
+  component.emit = emit.bind(null, component) as any;
   return component;
 }
 
@@ -28,10 +32,10 @@ function setupStatefulComponent(instance: any) {
   instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
   const { setup } = Component;
   if (setup) {
-    // setup可以返回一个function或者object，返回function则表示返回的是render函数，返回对象则会把该对象中的数据注入到当前组件的上下文中
-    // 将props作为参数传给setup
-    const setupResult = setup(shallowReadonly(instance.props));
+    // 将props、emit作为参数传给setup
+    const setupResult = setup(shallowReadonly(instance.props), { emit: instance.emit });
 
+    // 处理setup的执行结果
     handleSetupResult(instance, setupResult);
   }
 }
