@@ -62,10 +62,39 @@ export function createRenderer(options) {
   }
 
   function patchElement(n1, n2, container) {
+    // el 是在mountElement时赋值给vnode.el 的，更新时是没有vnode.el的，所以需要把旧vnode的el赋值给新vnode
+    const el = (n2.el = n1.el);
     // TODO 更新element
     console.log('patchElement');
     console.log('n1', n1);
     console.log('n2', n2);
+
+    // 更新props
+    const oldProps = n1.props;
+    const newProps = n2.props;
+    patchProps(el, oldProps, newProps);
+  }
+
+  // 更新props
+  function patchProps(el, oldProps, newProps) {
+    if (oldProps !== newProps) {
+      for (const key in newProps) {
+        const prevProp = oldProps[key];
+        const nextProp = newProps[key];
+        if (prevProp !== nextProp) {
+          // 当修改prop时：1. nextProp是一个新值；2.nextProp是undefined/null
+          hostPatchProp(el, key, prevProp, nextProp);
+        }
+      }
+      if (JSON.stringify(oldProps) !== '{}') {
+        for (const key in oldProps) {
+          // 删除newProps中没有的旧属性
+          if (!(key in newProps)) {
+            hostPatchProp(el, key, oldProps[key], null);
+          }
+        }
+      }
+    }
   }
 
   function mountElement(vnode: any, container: any, parentComponent) {
@@ -83,10 +112,10 @@ export function createRenderer(options) {
       hostInsert(children, el);
     }
 
-    // 2. 处理props
+    // 2. 初始化时添加props
     for (const key in props) {
       const val = props[key];
-      hostPatchProp(el, key, val);
+      hostPatchProp(el, key, null, val);
     }
 
     hostInsert(el, container);
@@ -138,8 +167,6 @@ export function createRenderer(options) {
         console.log('update');
         const preSubTree = instance.subTree;
         const subTree = (instance.subTree = instance.render.call(proxy));
-        console.log('current', subTree);
-        console.log('pre', preSubTree);
         patch(preSubTree, subTree, container, instance);
       }
     });
