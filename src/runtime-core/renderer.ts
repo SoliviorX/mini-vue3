@@ -10,6 +10,8 @@ export function createRenderer(options) {
     patchProp: hostPatchProp,
     insert: hostInsert,
     createText: hostCreateText,
+    remove: hostRemove,
+    setElementText: hostSetElementText,
   } = options;
 
   function render(vnode, container) {
@@ -42,7 +44,7 @@ export function createRenderer(options) {
   }
 
   function processFragment(n1, n2: any, container: any, parentComponent) {
-    mountChildren(n2, container, parentComponent);
+    mountChildren(n2.children, container, parentComponent);
   }
 
   function processText(n1, n2: any, container: any) {
@@ -57,22 +59,56 @@ export function createRenderer(options) {
       mountElement(n2, container, parentComponent);
     } else {
       // 元素更新
-      patchElement(n1, n2, container);
+      patchElement(n1, n2, container, parentComponent);
     }
   }
 
-  function patchElement(n1, n2, container) {
+  function patchElement(n1, n2, container, parentComponent) {
     // el 是在mountElement时赋值给vnode.el 的，更新时是没有vnode.el的，所以需要把旧vnode的el赋值给新vnode
     const el = (n2.el = n1.el);
-    // TODO 更新element
-    console.log('patchElement');
-    console.log('n1', n1);
-    console.log('n2', n2);
 
     // 更新props
     const oldProps = n1.props;
     const newProps = n2.props;
     patchProps(el, oldProps, newProps);
+
+    // 更新children
+    patchChildren(n1, n2, el, parentComponent);
+  }
+
+  function patchChildren(n1, n2, container, parentComponent) {
+    const prevShapFlag = n1.shapeFlag;
+    const c1 = n1.children;
+    const { shapeFlag } = n2;
+    const c2 = n2.children;
+    // 1. 如果新的children是text，老的children是Array或text
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      // 如果老的children是array，则把老的 children 清空
+      if (prevShapFlag & ShapeFlags.ARRAY_CHILDREN) {
+        unmountChildren(n1.children);
+      }
+      if (c1 !== c2) {
+        // 当新旧text不相等时，直接将新的text插入节点中
+        hostSetElementText(container, c2);
+      }
+    } else {
+      // 2. 否则新的children是数组
+      // 2.1 如果老的children是文本
+      if (prevShapFlag & ShapeFlags.TEXT_CHILDREN) {
+        // 清空文本
+        hostSetElementText(container, '');
+        // 渲染新的children
+        mountChildren(c2, container, parentComponent);
+      }
+    }
+  }
+
+  function unmountChildren(children) {
+    for (let i = 0; i < children.length; i++) {
+      // el 是真实节点
+      const el = children[i].el;
+      hostRemove(el);
+    }
   }
 
   // 更新props
@@ -106,7 +142,7 @@ export function createRenderer(options) {
     // 通过 VNode 的 shapeFlag property 与枚举变量 ShapeFlags 进行与运算是否大于0来判断 children 类型
     if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       // 如果包含子节点
-      mountChildren(vnode, el, parentComponent);
+      mountChildren(vnode.children, el, parentComponent);
     } else if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
       // 如果是文本节点
       hostInsert(children, el);
@@ -121,8 +157,8 @@ export function createRenderer(options) {
     hostInsert(el, container);
   }
 
-  function mountChildren(vnode, container, parentComponent) {
-    vnode.children.forEach(v => {
+  function mountChildren(children, container, parentComponent) {
+    children.forEach(v => {
       // 处于元素初始化的流程中，没有旧vnode，设为null
       patch(null, v, container, parentComponent);
     });
