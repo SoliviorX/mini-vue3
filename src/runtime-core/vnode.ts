@@ -1,5 +1,8 @@
 import { ShapeFlags } from '../shared/index';
 
+export const Fragment = Symbol('Fragment');
+export const Text = Symbol('Text');
+
 interface VNode {
   /* html标签名、有状态组件的配置、函数式组件 */
   type: string | object | Function;
@@ -40,4 +43,8 @@ export function createVNode(type, props?, children?) {
 // 根据vnode.type设置初始的vnode.shapeFlag
 function getShapeFlag(type) {
   return typeof type === 'string' ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT;
+}
+
+export function createTextVNode(text: string) {
+  return createVNode(Text, {}, text);
 }

@@ -7,14 +7,14 @@ export const Foo = {
     // 1. 默认插槽
     // return h('div', {}, [foo, renderSlots(this.$slots, 'default')]);
     // 2. 具名插槽
-    // return h('div', {}, [
-    //   renderSlots(this.$slots, 'header'),
-    //   foo,
-    //   renderSlots(this.$slots, 'footer'),
-    // ]);
+    return h('div', {}, [
+      renderSlots(this.$slots, 'header'),
+      foo,
+      renderSlots(this.$slots, 'footer'),
+    ]);
     // 3. 作用域插槽
-    const msg = 'this is a slot';
-    return h('div', {}, renderSlots(this.$slots, 'content', { msg }));
+    // const msg = 'this is a slot';
+    // return h('div', {}, renderSlots(this.$slots, 'content', { msg }));
   },
   setup() {
     return {};

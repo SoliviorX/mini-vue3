@@ -1,4 +1,4 @@
-import { createVNode } from '../vnode';
+import { createVNode, Fragment } from '../vnode';
 
 /**
  * 1. 当slots是一个数组时，在子组件中接收this.$slots需要进行处理：h('div', {}, [garandSon, this.$slots])，组件的children不能是嵌套数组，所以需要对this.$slots进行处理。
@@ -12,7 +12,7 @@ export function renderSlots(slots, name, props) {
       return slot(props);
     } else {
       // 如果是默认插槽/具名插槽
-      return createVNode('div', {}, slot);
+      return createVNode(Fragment, {}, slot);
     }
   }
 }

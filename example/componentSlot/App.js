@@ -1,4 +1,4 @@
-import { h } from '../../lib/guid-mini-vue.esm.js';
+import { h, createTextVNode } from '../../lib/guid-mini-vue.esm.js';
 import { Foo } from './Foo.js';
 
 export const App = {
@@ -23,22 +23,22 @@ export const App = {
     //   },
     // );
     // 3. 具名插槽，object的形式传入slots
-    // const foo = h(
-    //   Foo,
-    //   {},
-    //   {
-    //     header: h('p', {}, 'header'),
-    //     footer: h('p', {}, 'footer'),
-    //   },
-    // );
-    // 4. 作用域插槽：传入一个对象，对象中的每个方法为一个创建插槽的函数
     const foo = h(
       Foo,
       {},
       {
-        content: props => h('p', {}, 'content:' + props.msg),
+        header: [h('p', {}, 'header'), createTextVNode('a prograph')],
+        footer: h('p', {}, 'footer'),
       },
     );
+    // 4. 作用域插槽：传入一个对象，对象中的每个方法为一个创建插槽的函数
+    // const foo = h(
+    //   Foo,
+    //   {},
+    //   {
+    //     content: props => h('p', {}, 'content:' + props.msg),
+    //   },
+    // );
     return h('div', {}, [app, foo]);
   },
   setup() {
