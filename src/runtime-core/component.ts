@@ -34,9 +34,12 @@ function setupStatefulComponent(instance: any) {
   instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
   const { setup } = Component;
   if (setup) {
+    // 执行setup时，对currentInstance进行赋值
+    setCurrentInstance(instance);
     // 将props、emit作为参数传给setup
     const setupResult = setup(shallowReadonly(instance.props), { emit: instance.emit });
-
+    // 执行完setup后，清空currentInstance
+    setCurrentInstance(null);
     // 处理setup的执行结果
     handleSetupResult(instance, setupResult);
   }
@@ -58,4 +61,14 @@ function handleSetupResult(instance, setupResult: any) {
 function finishComponentSetup(instance: any) {
   const Component = instance.type;
   instance.render = Component.render;
+}
+
+let currentInstance = null;
+export function getCurrentInstance() {
+  return currentInstance;
+}
+
+// 使用函数包裹currentInstance的赋值：1. 方便调试 2. 代码可读性更高
+export function setCurrentInstance(instance) {
+  currentInstance = instance;
 }
