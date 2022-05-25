@@ -1,3 +1,4 @@
+import { effect } from '../reactivity/effect';
 import { ShapeFlags } from '../shared/index';
 import { createComponentInstance, setupComponent } from './component';
 import { createAppAPI } from './createApp';
@@ -13,46 +14,58 @@ export function createRenderer(options) {
 
   function render(vnode, container) {
     // render方法是在createApp中调用的，此时为根组件，parentComponent是null
-    patch(vnode, container, null);
+    patch(null, vnode, container, null);
   }
 
-  function patch(vnode, container, parentComponent) {
-    const { type, shapeFlag } = vnode;
+  // n1是老的vnode，如果n1不存在，则说明是初始化
+  // n2是新的vnode
+  function patch(n1, n2, container, parentComponent) {
+    const { type, shapeFlag } = n2;
 
     switch (type) {
       // Fragment 只渲染 children
       case Fragment:
-        processFragment(vnode, container, parentComponent);
+        processFragment(n1, n2, container, parentComponent);
         break;
       case Text:
-        processText(vnode, container);
+        processText(n1, n2, container);
         break;
       default:
         // 通过 VNode 的 shapeFlag property 与枚举变量 ShapeFlags 进行与运算是否大于0来判断 VNode 类型
         if (shapeFlag & ShapeFlags.ELEMENT) {
-          processElement(vnode, container, parentComponent);
+          processElement(n1, n2, container, parentComponent);
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-          processComponent(vnode, container, parentComponent);
+          processComponent(n1, n2, container, parentComponent);
         }
         break;
     }
   }
 
-  function processFragment(vnode: any, container: any, parentComponent) {
-    mountChildren(vnode, container, parentComponent);
+  function processFragment(n1, n2: any, container: any, parentComponent) {
+    mountChildren(n2, container, parentComponent);
   }
 
-  function processText(vnode: any, container: any) {
-    const { children } = vnode;
-    const textNode = (vnode.el = hostCreateText(children));
+  function processText(n1, n2: any, container: any) {
+    const { children } = n2;
+    const textNode = (n2.el = hostCreateText(children));
     hostInsert(textNode, container);
   }
 
-  function processElement(vnode: any, container: any, parentComponent) {
-    // 元素初始化
-    mountElement(vnode, container, parentComponent);
+  function processElement(n1, n2: any, container: any, parentComponent) {
+    if (!n1) {
+      // 元素初始化
+      mountElement(n2, container, parentComponent);
+    } else {
+      // 元素更新
+      patchElement(n1, n2, container);
+    }
+  }
 
-    // TODO 元素更新
+  function patchElement(n1, n2, container) {
+    // TODO 更新element
+    console.log('patchElement');
+    console.log('n1', n1);
+    console.log('n2', n2);
   }
 
   function mountElement(vnode: any, container: any, parentComponent) {
@@ -81,13 +94,14 @@ export function createRenderer(options) {
 
   function mountChildren(vnode, container, parentComponent) {
     vnode.children.forEach(v => {
-      patch(v, container, parentComponent);
+      // 处于元素初始化的流程中，没有旧vnode，设为null
+      patch(null, v, container, parentComponent);
     });
   }
 
-  function processComponent(vnode: any, container: any, parentComponent) {
+  function processComponent(n1, n2: any, container: any, parentComponent) {
     // 组件初始化
-    mountComponent(vnode, container, parentComponent);
+    mountComponent(n2, container, parentComponent);
 
     // TODO updateComponent
   }
@@ -103,15 +117,32 @@ export function createRenderer(options) {
   }
 
   function setupRenderEffect(instance: any, initialVNode, container) {
-    // 执行render函数，生成vnode树
-    const { proxy } = instance;
-    const subTree = instance.render.call(proxy);
+    /**
+     * 1. 使用effect包裹render逻辑，初次执行effect时会执行回调里的render函数，进行依赖收集；
+     * 2. 当响应式对象的值发生变化时，会触发 _effect.run()，重新执行render函数。
+     */
 
-    // 递归调用子VNode
-    // 子节点树的 parentComponent 就是当前instance
-    patch(subTree, container, instance);
-    // 设置父组件的 vnode.el，使得proxy代理对象在处理this.$el时有值，不会报错undefined
-    initialVNode.el = subTree.el;
+    effect(() => {
+      const { proxy } = instance;
+      // 如果是初始化
+      if (!instance.isMounted) {
+        console.log('init');
+        // 执行render函数，生成vnode树
+        const subTree = (instance.subTree = instance.render.call(proxy));
+        // 子节点树的 parentComponent 就是当前instance，作为第四个参数传入
+        patch(null, subTree, container, instance);
+        // 设置父组件的 vnode.el，使得proxy代理对象在处理this.$el时有值，不会报错undefined
+        initialVNode.el = subTree.el;
+        instance.isMounted = true;
+      } else {
+        console.log('update');
+        const preSubTree = instance.subTree;
+        const subTree = (instance.subTree = instance.render.call(proxy));
+        console.log('current', subTree);
+        console.log('pre', preSubTree);
+        patch(preSubTree, subTree, container, instance);
+      }
+    });
   }
 
   return {

@@ -3,6 +3,7 @@ import { initProps } from './componentProps';
 import { shallowReadonly } from '../reactivity/reactive';
 import { emit } from './componentEmit';
 import { initSlots } from './componentSlots';
+import { proxyRefs } from '../reactivity';
 
 export function createComponentInstance(vnode, parent) {
   const component = {
@@ -14,6 +15,8 @@ export function createComponentInstance(vnode, parent) {
     // 创建组件实例的时候，先从父组件获取provides
     provides: parent ? parent.provides : {},
     parent,
+    isMounted: false,
+    subTree: {},
     emit: () => {},
   };
   // 使用bind将component实例作为第一个参数传给emit，用于在emit中获取props对应的事件，所以用户只需要传入事件名及其他参数即可
@@ -54,7 +57,8 @@ function handleSetupResult(instance, setupResult: any) {
 
   // 如果setupResult是object类型，将setupResult放到组件实例上
   if (typeof setupResult === 'object') {
-    instance.setupState = setupResult;
+    // 将setupResult用proxyRefs进行处理，使得可以在render函数中通过key直接获取到ref类型（RefImpl）的值
+    instance.setupState = proxyRefs(setupResult);
   }
 
   // 处理组件的render函数
