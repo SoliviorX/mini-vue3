@@ -4,13 +4,16 @@ import { shallowReadonly } from '../reactivity/reactive';
 import { emit } from './componentEmit';
 import { initSlots } from './componentSlots';
 
-export function createComponentInstance(vnode) {
+export function createComponentInstance(vnode, parent) {
   const component = {
     vnode,
     type: vnode.type,
     setupState: {},
     props: {},
     slots: {},
+    // 创建组件实例的时候，先从父组件获取provides
+    provides: parent ? parent.provides : {},
+    parent,
     emit: () => {},
   };
   // 使用bind将component实例作为第一个参数传给emit，用于在emit中获取props对应的事件，所以用户只需要传入事件名及其他参数即可

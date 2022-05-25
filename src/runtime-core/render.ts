@@ -3,16 +3,17 @@ import { createComponentInstance, setupComponent } from './component';
 import { Fragment, Text } from './vnode';
 
 export function render(vnode, container) {
-  patch(vnode, container);
+  // render方法是在createApp中调用的，此时为根组件，parentComponent是null
+  patch(vnode, container, null);
 }
 
-function patch(vnode, container) {
+function patch(vnode, container, parentComponent) {
   const { type, shapeFlag } = vnode;
 
   switch (type) {
     // Fragment 只渲染 children
     case Fragment:
-      processFragment(vnode, container);
+      processFragment(vnode, container, parentComponent);
       break;
     case Text:
       processText(vnode, container);
@@ -20,16 +21,16 @@ function patch(vnode, container) {
     default:
       // 通过 VNode 的 shapeFlag property 与枚举变量 ShapeFlags 进行与运算是否大于0来判断 VNode 类型
       if (shapeFlag & ShapeFlags.ELEMENT) {
-        processElement(vnode, container);
+        processElement(vnode, container, parentComponent);
       } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-        processComponent(vnode, container);
+        processComponent(vnode, container, parentComponent);
       }
       break;
   }
 }
 
-function processFragment(vnode: any, container: any) {
-  mountChildren(vnode, container);
+function processFragment(vnode: any, container: any, parentComponent) {
+  mountChildren(vnode, container, parentComponent);
 }
 
 function processText(vnode: any, container: any) {
@@ -38,14 +39,14 @@ function processText(vnode: any, container: any) {
   container.append(textNode);
 }
 
-function processElement(vnode: any, container: any) {
+function processElement(vnode: any, container: any, parentComponent) {
   // 元素初始化
-  mountElement(vnode, container);
+  mountElement(vnode, container, parentComponent);
 
   // TODO 元素更新
 }
 
-function mountElement(vnode: any, container: any) {
+function mountElement(vnode: any, container: any, parentComponent) {
   // 将元素el存到vnode.el：访问this.$el时，即可从代理对象上访问instance.vnode.el
   const el = (vnode.el = document.createElement(vnode.type));
   const { children, props, shapeFlag } = vnode;
@@ -54,7 +55,7 @@ function mountElement(vnode: any, container: any) {
   // 通过 VNode 的 shapeFlag property 与枚举变量 ShapeFlags 进行与运算是否大于0来判断 children 类型
   if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
     // 如果包含子节点
-    mountChildren(vnode, el);
+    mountChildren(vnode, el, parentComponent);
   } else if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
     // 如果是文本节点
     el.textContent = children;
@@ -76,22 +77,22 @@ function mountElement(vnode: any, container: any) {
   container.append(el);
 }
 
-function mountChildren(vnode, container) {
+function mountChildren(vnode, container, parentComponent) {
   vnode.children.forEach(v => {
-    patch(v, container);
+    patch(v, container, parentComponent);
   });
 }
 
-function processComponent(vnode: any, container: any) {
+function processComponent(vnode: any, container: any, parentComponent) {
   // 组件初始化
-  mountComponent(vnode, container);
+  mountComponent(vnode, container, parentComponent);
 
   // TODO updateComponent
 }
 
-function mountComponent(initialVNode, container) {
+function mountComponent(initialVNode, container, parentComponent) {
   // 1. 创建组件实例
-  const instance = createComponentInstance(initialVNode);
+  const instance = createComponentInstance(initialVNode, parentComponent);
   // 2. 初始化组件属性：initProps、initSlots，调用setup、处理setup的返回值（当前仅处理返回类型为object）赋值到instance.setupState，将组件的render函数赋值到instance.render上
   setupComponent(instance);
 
@@ -105,7 +106,8 @@ function setupRenderEffect(instance: any, initialVNode, container) {
   const subTree = instance.render.call(proxy);
 
   // 递归调用子VNode
-  patch(subTree, container);
+  // 子节点树的 parentComponent 就是当前instance
+  patch(subTree, container, instance);
   // 设置父组件的 vnode.el，使得proxy代理对象在处理this.$el时有值，不会报错undefined
   initialVNode.el = subTree.el;
 }
