@@ -20,8 +20,9 @@ function patchProp(el, key, preVal, nextVal) {
   }
 }
 // 将节点插入container容器中
-function insert(el, container) {
-  container.append(el);
+function insert(child, parent, anchor?) {
+  // container.append(el);
+  parent.insertBefore(child, anchor || null);
 }
 // 创建文本节点
 function createText(text) {
