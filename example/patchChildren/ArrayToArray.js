@@ -60,13 +60,33 @@ import { ref, h } from '../../lib/guid-mini-vue.esm.js';
 // const nextChildren = [h('p', { key: 'A' }, 'A'), h('p', { key: 'B' }, 'B')];
 // 4.2 多出的部分在左侧：A B (C D) => (C D)
 // 比较完 i=0，e1=1，e2=-1，满足i>e2 && i<=e1
+// const prevChildren = [
+//   h('p', { key: 'A' }, 'A'),
+//   h('p', { key: 'B' }, 'B'),
+//   h('p', { key: 'C' }, 'C'),
+//   h('p', { key: 'D' }, 'D'),
+// ];
+// const nextChildren = [h('p', { key: 'C' }, 'C'), h('p', { key: 'D' }, 'D')];
+
+// 5. 对比中间的部分
+// 5.1 a,b,(c,d),f,g => a,b,(e,c),f,g 删除oldChildren中的d，更新c，创建e
 const prevChildren = [
   h('p', { key: 'A' }, 'A'),
   h('p', { key: 'B' }, 'B'),
-  h('p', { key: 'C' }, 'C'),
+  h('p', { key: 'C', id: 'c-prev' }, 'C'),
   h('p', { key: 'D' }, 'D'),
+  h('p', { key: 'H' }, 'H'),
+  h('p', { key: 'F' }, 'F'),
+  h('p', { key: 'G' }, 'G'),
 ];
-const nextChildren = [h('p', { key: 'C' }, 'C'), h('p', { key: 'D' }, 'D')];
+const nextChildren = [
+  h('p', { key: 'A' }, 'A'),
+  h('p', { key: 'B' }, 'B'),
+  h('p', { key: 'E' }, 'E'),
+  h('p', { key: 'C', id: 'c-next' }, 'C'),
+  h('p', { key: 'F' }, 'F'),
+  h('p', { key: 'G' }, 'G'),
+];
 
 export const ArrayToArray = {
   name: 'ArrayToArray',
