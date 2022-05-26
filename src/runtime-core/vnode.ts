@@ -10,6 +10,8 @@ interface VNode {
   props?: object;
   /* 子代VNode、文本 */
   children?: string | Array<VNode> | object;
+  /* 实例 */
+  component?: any;
   /* 真实el */
   el?;
   /* 元素的key */
@@ -23,6 +25,7 @@ export function createVNode(type, props?, children?) {
     type,
     props,
     children,
+    component: null,
     el: null,
     key: props && props.key,
     shapeFlag: getShapeFlag(type),

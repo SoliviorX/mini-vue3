@@ -1,6 +1,7 @@
 import { effect } from '../reactivity/effect';
 import { ShapeFlags } from '../shared/index';
 import { createComponentInstance, setupComponent } from './component';
+import { shouldUpdateComponent } from './componentUpdateUtils';
 import { createAppAPI } from './createApp';
 import { Fragment, Text } from './vnode';
 
@@ -322,15 +323,33 @@ export function createRenderer(options) {
   }
 
   function processComponent(n1, n2: any, container: any, parentComponent, anchor) {
-    // 组件初始化
-    mountComponent(n2, container, parentComponent, anchor);
+    if (!n1) {
+      // 组件初始化
+      mountComponent(n2, container, parentComponent, anchor);
+    } else {
+      // 组件更新
+      updateComponent(n1, n2);
+    }
+  }
 
-    // TODO updateComponent
+  function updateComponent(n1, n2) {
+    // 将n1的实例赋值给n2（和元素的更新类似，将n2.el赋值给n1.el）
+    const instance = (n2.component = n1.component);
+    if (shouldUpdateComponent(n1, n2)) {
+      instance.next = n2;
+      instance.update();
+    } else {
+      n2.el = n1.el;
+      instance.vnode = n2;
+    }
   }
 
   function mountComponent(initialVNode, container, parentComponent, anchor) {
-    // 1. 创建组件实例
-    const instance = createComponentInstance(initialVNode, parentComponent);
+    // 1. 创建组件实例，并且将实例添加到vnode上
+    const instance = (initialVNode.component = createComponentInstance(
+      initialVNode,
+      parentComponent,
+    ));
     // 2. 初始化组件属性：initProps、initSlots，调用setup、处理setup的返回值（当前仅处理返回类型为object）赋值到instance.setupState，将组件的render函数赋值到instance.render上
     setupComponent(instance);
 
@@ -343,8 +362,8 @@ export function createRenderer(options) {
      * 1. 使用effect包裹render逻辑，初次执行effect时会执行回调里的render函数，进行依赖收集；
      * 2. 当响应式对象的值发生变化时，会触发 _effect.run()，重新执行render函数。
      */
-
-    effect(() => {
+    // effect返回一个runner，调用runner会执行_effect.run()，即执行回调函数fn
+    instance.update = effect(() => {
       const { proxy } = instance;
       // 如果是初始化
       if (!instance.isMounted) {
@@ -358,6 +377,13 @@ export function createRenderer(options) {
         instance.isMounted = true;
       } else {
         console.log('update');
+        // next 是下一次更新时 render函数生成的vnode树，vnode是当前组件的vnode
+        const { vnode, next } = instance;
+        if (next) {
+          next.el = vnode.el;
+          // 更新instance中的数据
+          updateComponentPreRender(instance, next);
+        }
         const preSubTree = instance.subTree;
         const subTree = (instance.subTree = instance.render.call(proxy));
         patch(preSubTree, subTree, container, instance, anchor);
@@ -368,6 +394,12 @@ export function createRenderer(options) {
   return {
     createApp: createAppAPI(render),
   };
+}
+
+function updateComponentPreRender(instance, nextVnode) {
+  instance.vnode = nextVnode;
+  instance.next = null;
+  instance.props = nextVnode.props;
 }
 
 // 获得最长递增子序列
