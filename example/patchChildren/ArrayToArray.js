@@ -75,7 +75,7 @@ const prevChildren = [
   h('p', { key: 'B' }, 'B'),
   h('p', { key: 'C', id: 'c-prev' }, 'C'),
   h('p', { key: 'D' }, 'D'),
-  h('p', { key: 'H' }, 'H'),
+  h('p', { key: 'E' }, 'E'),
   h('p', { key: 'F' }, 'F'),
   h('p', { key: 'G' }, 'G'),
 ];
@@ -84,6 +84,8 @@ const nextChildren = [
   h('p', { key: 'B' }, 'B'),
   h('p', { key: 'E' }, 'E'),
   h('p', { key: 'C', id: 'c-next' }, 'C'),
+  h('p', { key: 'D' }, 'D'),
+  h('p', { key: 'I' }, 'I'),
   h('p', { key: 'F' }, 'F'),
   h('p', { key: 'G' }, 'G'),
 ];
