@@ -209,7 +209,7 @@ export function createRenderer(options) {
           // 如果能获取到prevChild.key对应的index，说明newChildren中有该节点
           newIndex = keyToNewIndexMap.get(prevChild.key);
         } else {
-          for (let j = s2; j < e2; j++) {
+          for (let j = s2; j <= e2; j++) {
             if (isSameVNodeType(prevChild, c2[j])) {
               newIndex = j;
               break;

@@ -70,24 +70,39 @@ import { ref, h } from '../../lib/guid-mini-vue.esm.js';
 
 // 5. 对比中间的部分
 // 5.1 a,b,(c,d),f,g => a,b,(e,c),f,g 删除oldChildren中的d，更新c，创建e
+// const prevChildren = [
+//   h('p', { key: 'A' }, 'A'),
+//   h('p', { key: 'B' }, 'B'),
+//   h('p', { key: 'C', id: 'c-prev' }, 'C'),
+//   h('p', { key: 'D' }, 'D'),
+//   h('p', { key: 'E' }, 'E'),
+//   h('p', { key: 'F' }, 'F'),
+//   h('p', { key: 'G' }, 'G'),
+// ];
+// const nextChildren = [
+//   h('p', { key: 'A' }, 'A'),
+//   h('p', { key: 'B' }, 'B'),
+//   h('p', { key: 'E' }, 'E'),
+//   h('p', { key: 'C', id: 'c-next' }, 'C'),
+//   h('p', { key: 'D' }, 'D'),
+//   h('p', { key: 'I' }, 'I'),
+//   h('p', { key: 'F' }, 'F'),
+//   h('p', { key: 'G' }, 'G'),
+// ];
+
+// fix C节点应该是移动，而不是删除之后重建
+// 修复思路：确保C节点能找到 newIndex
 const prevChildren = [
   h('p', { key: 'A' }, 'A'),
+  h('p', {}, 'C'),
   h('p', { key: 'B' }, 'B'),
-  h('p', { key: 'C', id: 'c-prev' }, 'C'),
   h('p', { key: 'D' }, 'D'),
-  h('p', { key: 'E' }, 'E'),
-  h('p', { key: 'F' }, 'F'),
-  h('p', { key: 'G' }, 'G'),
 ];
 const nextChildren = [
   h('p', { key: 'A' }, 'A'),
   h('p', { key: 'B' }, 'B'),
-  h('p', { key: 'E' }, 'E'),
-  h('p', { key: 'C', id: 'c-next' }, 'C'),
+  h('p', {}, 'C'),
   h('p', { key: 'D' }, 'D'),
-  h('p', { key: 'I' }, 'I'),
-  h('p', { key: 'F' }, 'F'),
-  h('p', { key: 'G' }, 'G'),
 ];
 
 export const ArrayToArray = {
