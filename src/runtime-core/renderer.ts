@@ -392,6 +392,7 @@ export function createRenderer(options) {
       },
       {
         scheduler() {
+          console.log('scheduler-update');
           // 将instance.update放入任务队列中
           queueJobs(instance.update);
         },
