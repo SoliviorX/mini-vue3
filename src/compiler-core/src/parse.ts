@@ -22,8 +22,29 @@ function parseChildren(context) {
       node = parseElement(context);
     }
   }
+
+  if (!node) {
+    node = parseText(context);
+  }
   nodes.push(node);
   return nodes;
+}
+
+function parseText(context: any) {
+  const content = parseTextData(context, context.source.length);
+
+  return {
+    type: NodeTypes.TEXT,
+    content,
+  };
+}
+
+function parseTextData(context: any, length: number) {
+  // 1. 获取content
+  const content = context.source.slice(0, length);
+  // 2. 推进template
+  advanceBy(context, length);
+  return content;
 }
 
 function parseElement(context: any) {
@@ -62,9 +83,9 @@ function parseInterpolation(context) {
   advanceBy(context, openDelimiter.length); // 删除 '{{'，context继续往前推进
   const closeIndex = context.source.indexOf(closeDelimiter); // indexOf匹配到从左到右的第一个结果匹配结果
   const rawContentLength = closeIndex;
-  const rawContent = context.source.slice(0, rawContentLength);
+  const rawContent = parseTextData(context, rawContentLength); // 获取rawContent，并推进context
   const content = rawContent.trim();
-  advanceBy(context, rawContentLength + closeDelimiter.length); // 删除插值及'}}'，context继续往前推进
+  advanceBy(context, closeDelimiter.length); // 删除'}}'，context继续往前推进
   return {
     type: NodeTypes.INTERPOLATION,
     content: {
