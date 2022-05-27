@@ -3,6 +3,7 @@ import { ShapeFlags } from '../shared/index';
 import { createComponentInstance, setupComponent } from './component';
 import { shouldUpdateComponent } from './componentUpdateUtils';
 import { createAppAPI } from './createApp';
+import { queueJobs } from './scheduler';
 import { Fragment, Text } from './vnode';
 
 export function createRenderer(options) {
@@ -67,7 +68,6 @@ export function createRenderer(options) {
   function patchElement(n1, n2, container, parentComponent, anchor) {
     // el 是在mountElement时赋值给vnode.el 的，更新时是没有vnode.el的，所以需要把旧vnode的el赋值给新vnode
     const el = (n2.el = n1.el);
-
     // 更新props
     const oldProps = n1.props;
     const newProps = n2.props;
@@ -363,32 +363,40 @@ export function createRenderer(options) {
      * 2. 当响应式对象的值发生变化时，会触发 _effect.run()，重新执行render函数。
      */
     // effect返回一个runner，调用runner会执行_effect.run()，即执行回调函数fn
-    instance.update = effect(() => {
-      const { proxy } = instance;
-      // 如果是初始化
-      if (!instance.isMounted) {
-        console.log('init');
-        // 执行render函数，生成vnode树
-        const subTree = (instance.subTree = instance.render.call(proxy));
-        // 子节点树的 parentComponent 就是当前instance，作为第四个参数传入
-        patch(null, subTree, container, instance, anchor);
-        // 设置父组件的 vnode.el，使得proxy代理对象在处理this.$el时有值，不会报错undefined
-        initialVNode.el = subTree.el;
-        instance.isMounted = true;
-      } else {
-        console.log('update');
-        // next 是下一次更新时 render函数生成的vnode树，vnode是当前组件的vnode
-        const { vnode, next } = instance;
-        if (next) {
-          next.el = vnode.el;
-          // 更新instance中的数据
-          updateComponentPreRender(instance, next);
+    instance.update = effect(
+      () => {
+        const { proxy } = instance;
+        // 如果是初始化
+        if (!instance.isMounted) {
+          console.log('init');
+          // 执行render函数，生成vnode树
+          const subTree = (instance.subTree = instance.render.call(proxy));
+          // 子节点树的 parentComponent 就是当前instance，作为第四个参数传入
+          patch(null, subTree, container, instance, anchor);
+          // 设置父组件的 vnode.el，使得proxy代理对象在处理this.$el时有值，不会报错undefined
+          initialVNode.el = subTree.el;
+          instance.isMounted = true;
+        } else {
+          console.log('update');
+          // next 是下一次更新时 render函数生成的vnode树，vnode是当前组件的vnode
+          const { vnode, next } = instance;
+          if (next) {
+            next.el = vnode.el;
+            // 更新instance中的数据
+            updateComponentPreRender(instance, next);
+          }
+          const preSubTree = instance.subTree;
+          const subTree = (instance.subTree = instance.render.call(proxy));
+          patch(preSubTree, subTree, container, instance, anchor);
         }
-        const preSubTree = instance.subTree;
-        const subTree = (instance.subTree = instance.render.call(proxy));
-        patch(preSubTree, subTree, container, instance, anchor);
-      }
-    });
+      },
+      {
+        scheduler() {
+          // 将instance.update放入任务队列中
+          queueJobs(instance.update);
+        },
+      },
+    );
   }
 
   return {
