@@ -90,7 +90,7 @@ function parseElement(context: any, ancestors) {
   element.children = parseChildren(context, ancestors);
   ancestors.pop();
 
-  // 标签一致，则删除；否则提示错误
+  // 若当前遇到的结束标签与开始标签一致，则删除；否则提示错误
   if (startsWithEndTagOpen(context.source, element.tag)) {
     parseTag(context, TagType.End); // 删除结束标签
   } else {
