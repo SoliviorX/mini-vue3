@@ -1,6 +1,7 @@
 import { generate } from '../src/codegen';
 import { baseParse } from '../src/parse';
 import { transform } from '../src/transform';
+import { transformExpression } from '../src/transforms/transformExpression';
 
 describe('codegen', () => {
   it('string', () => {
@@ -12,6 +13,15 @@ describe('codegen', () => {
      * 1. 抓bug（无意间修改了代码，导致快照更新）
      * 2. 有意更新，创建新的快照
      */
+    expect(code).toMatchSnapshot();
+  });
+
+  it('interpolation', () => {
+    const ast = baseParse('{{message}}');
+    transform(ast, {
+      nodeTransforms: [transformExpression],
+    });
+    const { code } = generate(ast);
     expect(code).toMatchSnapshot();
   });
 });
