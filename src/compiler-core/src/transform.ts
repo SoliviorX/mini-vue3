@@ -1,7 +1,15 @@
-export function transform(root, options) {
+export function transform(root, options = {}) {
   const context = createTransformContext(root, options);
   // 遍历，调用nodeTransforms，递归children
   traverseNode(root, context);
+
+  // 设置root.codegenNode
+  createRootCodegen(root);
+}
+
+function createRootCodegen(root: any) {
+  // 根节点的children长度为1
+  root.codegenNode = root.children[0];
 }
 
 function createTransformContext(root: any, options: any) {
