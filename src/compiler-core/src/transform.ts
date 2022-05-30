@@ -35,7 +35,7 @@ function traverseNode(node: any, context) {
   const nodeTransforms = context.nodeTransforms;
   for (let i = 0; i < nodeTransforms.length; i++) {
     const transform = nodeTransforms[i];
-    transform(node);
+    transform(node, context);
   }
 
   switch (node.type) {
@@ -44,6 +44,20 @@ function traverseNode(node: any, context) {
       break;
     case NodeTypes.ROOT:
     case NodeTypes.ELEMENT:
+      /**
+       * 处理元素时不能在这里收集依赖；因为Root节点和element类型，都走到这一步，而Root节点是不需要引入createElementVNode的
+       * 如果想在这里收集依赖，可以将swith改写成：
+       * case NodeTypes.ROOT:
+       *    traverseChildren(node, context);
+       *    break;
+       * case NodeTypes.ELEMENT:
+       *    context.helper(CREATE_ELEMENT_VNODE);
+       *    traverseChildren(node, context);
+       *    break;
+       *
+       * 这样就比较繁琐，倒不如通过插件来引入依赖
+       */
+
       // 只有root和Element才有children属性
       // 【深度优先搜索】：遍历children，递归调用traverseNode
       traverseChildren(node, context);
