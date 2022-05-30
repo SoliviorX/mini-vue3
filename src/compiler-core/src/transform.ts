@@ -14,8 +14,14 @@ export function transform(root, options = {}) {
 }
 
 function createRootCodegen(root: any) {
-  // 根节点的children长度为1
-  root.codegenNode = root.children[0];
+  const child = root.children[0];
+  // 元素节点的codegenNode设为 children[0].codegenNode
+  if (child.type === NodeTypes.ELEMENT) {
+    root.codegenNode = child.codegenNode;
+  } else {
+    // 根节点的children长度为1
+    root.codegenNode = root.children[0];
+  }
 }
 
 function createTransformContext(root: any, options: any) {
@@ -31,11 +37,13 @@ function createTransformContext(root: any, options: any) {
 }
 
 function traverseNode(node: any, context) {
-  // 递归调用所有传入的nodeTransforms
   const nodeTransforms = context.nodeTransforms;
+  const exitFns: any = [];
+  // 从前往后的顺序，收集每个层级的插件方法
   for (let i = 0; i < nodeTransforms.length; i++) {
     const transform = nodeTransforms[i];
-    transform(node, context);
+    const onExit = transform(node, context);
+    if (onExit) exitFns.push(onExit);
   }
 
   switch (node.type) {
@@ -64,6 +72,12 @@ function traverseNode(node: any, context) {
       break;
     default:
       break;
+  }
+
+  // 插件从后往前执行，从深层级向浅层级执行
+  let i = exitFns.length;
+  while (i--) {
+    exitFns[i]();
   }
 }
 

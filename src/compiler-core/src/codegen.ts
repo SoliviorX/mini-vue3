@@ -1,5 +1,6 @@
 import { NodeTypes } from './ast';
 import { CREATE_ELEMENT_VNODE, helperMapName, TO_DISPLAY_STRING } from './runtimeHelpers';
+import { isString } from '../../shared/index';
 
 export function generate(ast) {
   const context = createCodegenContext();
@@ -59,6 +60,9 @@ function genNode(node: any, context) {
     case NodeTypes.ELEMENT:
       genElement(node, context);
       break;
+    case NodeTypes.COMPOUND_EXPRESSION:
+      genCompoundExpression(node, context);
+      break;
     default:
       break;
   }
@@ -79,7 +83,48 @@ function genExpression(node, context) {
   push(`${node.content}`);
 }
 function genElement(node, context) {
-  const { tag } = node;
+  const { tag, children, props } = node;
   const { push, helper } = context;
-  push(`_${helper(CREATE_ELEMENT_VNODE)}("${tag}")`);
+
+  push(`_${helper(CREATE_ELEMENT_VNODE)}(`);
+  genNodeList(genNullable([tag, props, children]), context);
+  push(')');
+}
+
+function genNullable(args: any) {
+  // 把末尾为null 的都删除掉
+  let i = args.length;
+  while (i--) {
+    if (args[i] != null) break;
+  }
+  // 把为 falsy 的值都替换成 "null"
+  return args.slice(0, i + 1).map(arg => arg || 'null');
+}
+function genNodeList(nodes, context) {
+  const { push } = context;
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    if (isString(node)) {
+      push(node);
+    } else {
+      genNode(node, context);
+    }
+    // node 和 node 之间需要加上逗号；最后一个逗号不需要
+    if (i < nodes.length - 1) {
+      push(', ');
+    }
+  }
+}
+
+function genCompoundExpression(node: any, context: any) {
+  const children = node.children;
+  const { push } = context;
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    if (isString(child)) {
+      push(child);
+    } else {
+      genNode(child, context);
+    }
+  }
 }
