@@ -370,7 +370,7 @@ export function createRenderer(options) {
         if (!instance.isMounted) {
           console.log('init');
           // 执行render函数，生成vnode树
-          const subTree = (instance.subTree = instance.render.call(proxy));
+          const subTree = (instance.subTree = instance.render.call(proxy, proxy));
           // 子节点树的 parentComponent 就是当前instance，作为第四个参数传入
           patch(null, subTree, container, instance, anchor);
           // 设置父组件的 vnode.el，使得proxy代理对象在处理this.$el时有值，不会报错undefined
@@ -386,7 +386,7 @@ export function createRenderer(options) {
             updateComponentPreRender(instance, next);
           }
           const preSubTree = instance.subTree;
-          const subTree = (instance.subTree = instance.render.call(proxy));
+          const subTree = (instance.subTree = instance.render.call(proxy, proxy));
           patch(preSubTree, subTree, container, instance, anchor);
         }
       },

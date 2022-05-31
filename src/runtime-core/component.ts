@@ -68,6 +68,15 @@ function handleSetupResult(instance, setupResult: any) {
 
 function finishComponentSetup(instance: any) {
   const Component = instance.type;
+
+  // 将template转化成render函数
+  // 自定义的render函数，优先级比template高
+  if (compiler && !Component.render) {
+    if (Component.template) {
+      // compiler就是src/index.ts 中的compileToFunction
+      Component.render = compiler(Component.template);
+    }
+  }
   instance.render = Component.render;
 }
 
@@ -79,4 +88,9 @@ export function getCurrentInstance() {
 // 使用函数包裹currentInstance的赋值：1. 方便调试 2. 代码可读性更高
 export function setCurrentInstance(instance) {
   currentInstance = instance;
+}
+
+let compiler;
+export function registerRuntimeCompiler(_compiler) {
+  compiler = _compiler;
 }

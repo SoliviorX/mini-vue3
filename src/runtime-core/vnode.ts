@@ -3,6 +3,8 @@ import { ShapeFlags } from '../shared/index';
 export const Fragment = Symbol('Fragment');
 export const Text = Symbol('Text');
 
+export { createVNode as createElementVNode };
+
 interface VNode {
   /* html标签名、有状态组件的配置、函数式组件 */
   type: string | object | Function;
