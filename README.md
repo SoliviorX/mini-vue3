@@ -1,8 +1,9 @@
 ## About
-这是一个基于vue3实现的mini-vue-next，实现了大部分vue3的功能，包括但不限于reactivity响应式、runtime-core初始化及更新、compiler编译流程等。
+这是一个基于[cuixiaorui](https://github.com/cuixiaorui)大佬的[mini-vue](https://github.com/cuixiaorui/mini-vue)实现的mini-vue3，实现了大部分vue3的功能，包括但不限于reactivity响应式、runtime-core初始化及更新、compiler编译流程等。
 
 ## 技术栈
-typescript、jest、ES6...
+typescript、jest、ES6、menorepo...
+
 ## 项目运行
 先打包项目：
 ```
